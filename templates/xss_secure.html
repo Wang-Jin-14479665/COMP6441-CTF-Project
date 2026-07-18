@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Secure XSS Example</title>
+  </head>
+  <body>
+    <h1>Secure XSS Example</h1>
+    <form>
+      <label>Search: <input name="q" value="{{ query }}" /></label>
+      <button type="submit">Search</button>
+    </form>
+    {% if query %}
+      <p>You searched for: {{ query }}</p>
+    {% endif %}
+    <p><a href="/">Back home</a></p>
+  </body>
+</html>

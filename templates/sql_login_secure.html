@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Secure SQL Login</title>
+  </head>
+  <body>
+    <h1>Secure SQL Login Example</h1>
+    <form method="post">
+      <label>Username: <input name="username" /></label><br>
+      <label>Password: <input name="password" type="password" /></label><br>
+      <button type="submit">Login</button>
+    </form>
+    {% if message %}
+      <p>{{ message }}</p>
+    {% endif %}
+    <p><a href="/">Back home</a></p>
+  </body>
+</html>

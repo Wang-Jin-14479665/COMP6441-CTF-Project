@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>XSS Challenge</title>
+  </head>
+  <body>
+    <h1>Reflected XSS Challenge</h1>
+    <form>
+      <label>Search: <input name="q" value="{{ query }}" /></label>
+      <button type="submit">Search</button>
+    </form>
+    {% if result %}
+      {{ result|safe }}
+    {% endif %}
+    <p>Payload: <code>&lt;script&gt;alert('xss')&lt;/script&gt;</code></p>
+    <p><a href="/">Back home</a></p>
+  </body>
+</html>
