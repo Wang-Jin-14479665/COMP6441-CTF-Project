@@ -5,6 +5,7 @@ from flask import Flask, g, redirect, render_template, request, url_for
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "demo-secret"
 DB_PATH = Path(__file__).with_name("ctf_demo.db")
+CURRENT_USER_ID = 1
 
 
 def init_db():
@@ -13,7 +14,7 @@ def init_db():
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
             role TEXT NOT NULL
@@ -23,7 +24,7 @@ def init_db():
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS profiles (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY,
             owner_id INTEGER NOT NULL,
             name TEXT NOT NULL,
             email TEXT NOT NULL,
@@ -33,18 +34,19 @@ def init_db():
     )
     cur.execute("DELETE FROM users")
     cur.execute("DELETE FROM profiles")
+    cur.execute("DELETE FROM sqlite_sequence WHERE name IN ('users', 'profiles')")
     cur.executemany(
-        "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+        "INSERT INTO users (id, username, password, role) VALUES (?, ?, ?, ?)",
         [
-            ("alice", "password123", "student"),
-            ("bob", "letmein", "student"),
+            (1, "alice", "password123", "student"),
+            (2, "bob", "letmein", "student"),
         ],
     )
     cur.executemany(
-        "INSERT INTO profiles (owner_id, name, email, notes) VALUES (?, ?, ?, ?)",
+        "INSERT INTO profiles (id, owner_id, name, email, notes) VALUES (?, ?, ?, ?, ?)",
         [
-            (1, "Alice Example", "alice@example.test", "FLAG{idor_missing_authorization}"),
-            (2, "Bob Example", "bob@example.test", "Public profile note"),
+            (1, 1, "Alice Example", "alice@example.test", "Own profile"),
+            (2, 2, "Bob Example", "bob@example.test", "FLAG{idor_missing_authorization}"),
         ],
     )
     conn.commit()
@@ -78,7 +80,10 @@ def sql_login():
         query = f"SELECT id, username, role FROM users WHERE username = '{username}' AND password = '{password}'"
         row = g.db.execute(query).fetchone()
         if row:
-            message = "Login successful. FLAG{sql_injection_login_bypass}"
+            if "' or '1'='1" in username.lower() or "' or '1'='1" in password.lower():
+                message = "Login successful. FLAG{sql_injection_login_bypass}"
+            else:
+                message = "Login successful."
         else:
             message = "Invalid username or password."
     return render_template("sql_login.html", message=message)
@@ -104,7 +109,10 @@ def sql_login_secure_post():
 def xss():
     query = request.args.get("q", "")
     # Vulnerable: reflected input is inserted directly into the HTML.
-    result = f"<p>You searched for: {query}</p>"
+    if "<script" in query.lower():
+        result = "<p>You searched for: " + query + "</p><p>FLAG{xss_untrusted_input}</p>"
+    else:
+        result = f"<p>You searched for: {query}</p>"
     return render_template("xss.html", query=query, result=result)
 
 
@@ -133,11 +141,10 @@ def idor():
 @app.route("/idor-secure")
 def idor_secure():
     profile_id = request.args.get("id", "1")
-    current_user_id = 1
     row = g.db.execute("SELECT id, owner_id, name, email, notes FROM profiles WHERE id = ?", (profile_id,)).fetchone()
     if row is None:
         return render_template("idor.html", profile=None, message="Profile not found.")
-    if row[1] != current_user_id:
+    if row[1] != CURRENT_USER_ID:
         return render_template("idor.html", profile=None, message="Access denied.")
     profile = {
         "id": row[0],

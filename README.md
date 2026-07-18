@@ -19,7 +19,7 @@ Then open http://127.0.0.1:5000/.
 
 - SQL Injection: /sql-login
 - Reflected XSS: /xss?q=hello
-- IDOR: /idor?id=3
+- IDOR: /idor?id=2
 
 ## Warning
 
