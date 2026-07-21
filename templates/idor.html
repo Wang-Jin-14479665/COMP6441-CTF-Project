@@ -6,6 +6,9 @@
   </head>
   <body>
     <h1>Profile Viewer</h1>
+    {% if current_user %}
+      <p>Current user: {{ current_user }}</p>
+    {% endif %}
     {% if message %}
       <p>{{ message }}</p>
     {% endif %}

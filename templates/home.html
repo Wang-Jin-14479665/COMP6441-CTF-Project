@@ -6,6 +6,12 @@
   </head>
   <body>
     <h1>Minimal CTF Demo</h1>
+    {% if current_user %}
+      <p>Logged in as: {{ current_user }}</p>
+      <p><a href="/logout">Logout</a></p>
+    {% else %}
+      <p><a href="/login">Login as Alice or Bob</a></p>
+    {% endif %}
     <ul>
       <li><a href="/sql-login">SQL Injection Login</a></li>
       <li><a href="/xss?q=hello">Reflected XSS</a></li>
