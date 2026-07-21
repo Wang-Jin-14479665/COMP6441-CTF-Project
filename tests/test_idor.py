@@ -43,6 +43,18 @@ class IdorBehaviorTests(unittest.TestCase):
         self.assertIn(b"Bob Example", response.data)
         self.assertIn(b"idor_missing_authorization", response.data)
 
+    def test_homepage_idor_link_defaults_to_current_user_profile(self):
+        self.client.post(
+            "/login",
+            data={"username": "alice", "password": "password123"},
+            follow_redirects=True,
+        )
+
+        response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'href="/idor">IDOR</a>', response.data)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -35,7 +35,7 @@ def init_db():
     )
     cur.execute("DELETE FROM users")
     cur.execute("DELETE FROM profiles")
-    cur.execute("DELETE FROM sqlite_sequence WHERE name IN ('users', 'profiles')")
+    # cur.execute("DELETE FROM sqlite_sequence WHERE name IN ('users', 'profiles')")
     cur.executemany(
         "INSERT INTO users (id, username, password, role) VALUES (?, ?, ?, ?)",
         [
@@ -48,10 +48,10 @@ def init_db():
     cur.executemany(
         "INSERT INTO profiles (id, owner_id, name, email, notes) VALUES (?, ?, ?, ?, ?)",
         [
-            (1, 1, "Alice Example", "alice@example.test", "Profile note"),
-            (2, 2, "Bob Example", "bob@example.test", "Profile note"),
-            (3, 3, "Charlie Example", "charlie@example.test", "Profile note"),
-            (4, 4, "Diana Example", "diana@example.test", "Profile note"),
+            (1, 1, "Alice Example", "alice@example.test", "Alice"),
+            (2, 2, "Bob Example", "bob@example.test", "Bob"),
+            (3, 3, "Charlie Example", "charlie@example.test", "Charlie"),
+            (4, 4, "Diana Example", "diana@example.test", "Diana"),
         ],
     )
     conn.commit()
@@ -158,9 +158,16 @@ def idor():
 
     profile_id = request.args.get("id")
     if profile_id is None:
-        profile_id = str(current_user_id)
+        row = g.db.execute(
+            "SELECT id, owner_id, name, email, notes FROM profiles WHERE owner_id = ?",
+            (current_user_id,),
+        ).fetchone()
+    else:
+        row = g.db.execute(
+            "SELECT id, owner_id, name, email, notes FROM profiles WHERE id = ?",
+            (profile_id,),
+        ).fetchone()
 
-    row = g.db.execute("SELECT id, owner_id, name, email, notes FROM profiles WHERE id = ?", (profile_id,)).fetchone()
     if row is None:
         return render_template("idor.html", profile=None, message="Profile not found.", current_user=session.get(SESSION_USERNAME_KEY))
 
@@ -172,7 +179,7 @@ def idor():
         "notes": row[4],
     }
 
-    if profile["id"] != current_user_id:
+    if profile["owner_id"] != current_user_id:
         profile["notes"] = f"{profile['notes']} FLAG{{idor_missing_authorization}}"
 
     return render_template("idor.html", profile=profile, message="", current_user=session.get(SESSION_USERNAME_KEY))
